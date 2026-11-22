@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -10,6 +10,8 @@ import { ProjectsModule } from './projects/projects.module.js';
 import { MonitorsModule } from './monitors/monitors.module.js';
 import { ChecksModule } from './checks/checks.module.js';
 import { AppController } from './app.controller.js';
+import { CsrfCookieMiddleware } from './common/middleware/csrf-cookie.middleware.js';
+import { CsrfGuard } from './common/guards/csrf.guard.js';
 
 @Module({
   imports: [
@@ -45,6 +47,14 @@ import { AppController } from './app.controller.js';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CsrfCookieMiddleware).forRoutes('*');
+  }
+}

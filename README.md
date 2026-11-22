@@ -37,6 +37,7 @@ npm run start:dev
 - **Helmet** para headers HTTP seguros (CSP básico, HSTS, etc.)
 - **CORS restrito** a uma origin explícita (sem wildcard), com `credentials: true`
 - **Autorização por recurso**: todo acesso a projeto/monitor valida o `userId` dono do registro — nunca apenas a existência do ID
+- **Proteção CSRF (double-submit cookie)**: como o cookie de sessão precisa de `SameSite=None` em produção (frontend e backend em domínios diferentes), toda requisição que muda estado (POST/PUT/PATCH/DELETE) exige um header `X-CSRF-Token` igual ao cookie `csrf_token` (não-httpOnly, legível pelo frontend). O frontend obtém esse cookie com qualquer requisição GET (ex: `/auth/me`) antes de enviar a primeira mutação
 - **Segredos fora do código**: `.env` no `.gitignore`, validado via schema (Zod) no boot — a aplicação não sobe se faltar `JWT_SECRET`, `DATABASE_URL`, etc.
 - **CI**: lint + type-check + testes + `npm audit --audit-level=high` em todo PR; Dependabot semanal para dependências
 
