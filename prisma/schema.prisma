@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  monitors Monitor[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Monitor {
+  id             String   @id @default(uuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  url            String
+  intervalSeconds Int     @default(300)
+  isActive       Boolean  @default(true)
+  lastCheckedAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  checks    Check[]
+  incidents Incident[]
+
+  @@index([projectId])
+  @@map("monitors")
+}
+
+model Check {
+  id             String   @id @default(uuid())
+  monitorId      String
+  monitor        Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  isUp           Boolean
+  statusCode     Int?
+  responseTimeMs Int?
+  error          String?
+  checkedAt      DateTime @default(now())
+
+  @@index([monitorId, checkedAt])
+  @@map("checks")
+}
+
+model Incident {
+  id          String    @id @default(uuid())
+  monitorId   String
+  monitor     Monitor   @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+  cause       String?
+
+  @@index([monitorId])
+  @@map("incidents")
+}
